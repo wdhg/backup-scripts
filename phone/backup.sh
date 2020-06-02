@@ -1,5 +1,5 @@
 BACKUPS_DIR=~/backups/phone
-TARGET_DIRS=(/sdcard/Snapchat /sdcard/Pictures)
+TARGET_DIRS=(/sdcard/Snapchat /sdcard/Pictures /sdcard/DCIM)
 
 if [ $(adb get-state)  != "device" ]
 then
@@ -7,31 +7,23 @@ then
   exit
 fi
 
-echo "Starting backup..."
+echo "Starting phone backup..."
 
 for target_dir in ${TARGET_DIRS[*]}
 do
-  backup_dir="${BACKUPS_DIR}/$(basename $target_dir)"
-  echo "Backing up $target_dir to $backup_dir..."
+  echo "Backing up $target_dir to $BACKUPS_DIR$target_dir..."
 
-  # check if back directory exists
-  if [ ! -d $backup_dir ];
-  then
-    mkdir $backup_dir
-  fi
+  files=$(adb shell find $target_dir -type f)
 
-  # i dont pull the entire directory
-  # if it is important that files be overwritten
-  # uncomment the next line and comment out the rest
-
-  # adb pull $target_dir $backup_dir
-
-  file=$(adb shell ls $target_dir)
-
-  for file in ${file[*]}
+  for target_file in ${files[*]}
   do
-    target_file="$target_dir/$file"
-    backup_file="$backup_dir/$file"
+    backup_file="$BACKUPS_DIR$target_file"
+    backup_file_dir=$(dirname $backup_file)
+    # check if files backup directory exists
+    if [ ! -d $backup_file_dir ];
+    then
+      mkdir -p $backup_file_dir
+    fi
     if [ ! -f $backup_file ];
     then
       adb pull $target_file $backup_file
